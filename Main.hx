@@ -1,34 +1,33 @@
 import h2d.Text;
-import h2d.Interactive;
 import h2d.Graphics;
 
 class Ball extends h2d.Graphics {
-    var travel = 5;
-    public var angle = 0.0;
+    var speed = 8;
+    public var xspeed = 5.0;
+    public var yspeed = 5.0;
 
     static public function newBall(scene: h2d.Scene):Ball {
         var ball = new Ball(scene);
         ball.beginFill(0xCCCCCC);
         ball.drawCircle(scene.width * 0.5, scene.height * 0.5, 7.5);
         ball.endFill();
+        ball.randomizeDirection();
         return ball;
     }
 
-    public function moveBall(?angle: Null<Float>) {
-        if (angle != null) {
-            this.angle += angle;
-        }
-
-        if (this.angle >= 360) {
-            this.angle -= 360;
-        }
-
-        this.x += this.travel * Math.cos(this.angle);
-        this.y += this.travel * Math.sin(this.angle);
+    public function moveBall() {
+        this.x += this.xspeed;
+        this.y += this.yspeed;
     }
 
-    public function setAngle(angle: Float) {
-        this.angle += angle;
+    public function randomizeDirection() {
+        this.xspeed = Math.random() * this.speed + 0.1;
+        this.yspeed = this.speed - this.xspeed;
+        if (Math.random() < 0.5) {
+            // Go left
+            this.xspeed = -this.xspeed;
+            this.yspeed = -this.yspeed;
+        }
     }
 }
 
@@ -154,7 +153,7 @@ class Main extends hxd.App {
         var ballBounds = this.ball.getBounds();
         if (this.leftPlayerPaddle.getBounds().intersects(ballBounds) ||
             this.rightPlayerPaddle.getBounds().intersects(ballBounds)) {
-            this.ball.setAngle(180);
+            this.ball.xspeed = -this.ball.xspeed;
         }
 
         var leftBorder = this.border.getBounds();
@@ -180,21 +179,11 @@ class Main extends hxd.App {
         var bottomBorder = this.border.getBounds();
         bottomBorder.yMin = bottomBorder.yMax - 5;
 
-        if (topBorder.intersects(ballBounds)) {
-            if (this.ball.angle < 90) {
-                this.ball.moveBall(-90);
-            } else {
-                this.ball.moveBall(90);
-            }
-        } else if (bottomBorder.intersects(ballBounds)) {
-            if (this.ball.angle < 90) {
-                this.ball.moveBall(-90);
-            } else {
-                this.ball.moveBall(90);
-            }
-        } else {
-            this.ball.moveBall();
+        if (ballBounds.intersects(topBorder) || ballBounds.intersects(bottomBorder)) {
+            this.ball.yspeed = -this.ball.yspeed;
         }
+
+        this.ball.moveBall();
 
     }
 
@@ -205,9 +194,6 @@ class Main extends hxd.App {
 
         this.leftPlayerPaddle.y = 0;
         this.rightPlayerPaddle.y = 0;
-
-        // Choose a random direction between 0 and 360.
-       this.ball.setAngle(Math.random() * 360);
     }
 
     function beginGame() {
@@ -238,7 +224,6 @@ class Main extends hxd.App {
     }
 
     static function main() {
-        hxd.Res.initEmbed();
         new Main();
     }
 }
